@@ -52,7 +52,7 @@ def processData(subsType, data):
         'depth20': ['bids', 'asks']
     }[subsType]
 
-    return np.array([float(data[l]) for l in letters])
+    return np.array([data[l] for l in letters])
 
 
 def display_message(_, message):
