@@ -1,4 +1,6 @@
 
+Stables = {'USDT', 'BNB', 'BTC', 'ETH'}
+
 # tracking_pairs = {
 #     'BTC_USDT',
 #     'ETH_USDT',
