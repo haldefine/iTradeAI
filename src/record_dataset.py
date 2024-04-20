@@ -4,10 +4,11 @@ import h5py
 import numpy as np
 
 import binance_service
-
+import config
+from web import runServer
 
 def addData(pair, data):
-    with h5py.File('datasets/data.h5', 'a') as file:
+    with h5py.File(config.file_path, 'a') as file:
         if pair not in file:
             pair_dataset = file.create_dataset(pair, shape=(0, data.shape[0]), maxshape=(None, data.shape[0]),
                                                compression='gzip', compression_opts=9)
@@ -43,8 +44,8 @@ def processData(subsType, data):
     elif subsType == 'avgPrice':
         return [float(data['w'])]
     elif subsType == 'depth20':
-        return [[[float(bid[0]), float(bid[1])] for bid in data['bids']], [[float(ask[0]), float(ask[1])] for ask in
-                                                                           data['asks']]]
+        return [[float(bid[0]), float(bid[1])] for bid in data['bids']] + [[float(ask[0]), float(ask[1])] for ask in
+                                                                           data['asks']]
 
 
 SubTypes = ['kline_1s', 'ticker', 'avgPrice', 'depth20']
@@ -59,9 +60,11 @@ def message_handler(_, message):
         return
     subsType = message['stream'].split('@')[1]
     pair = message['stream'].split('@')[0]
-    new_data = np.array(processData(subsType, message['data'])).flatten()
-    if subsType == 'kline_1s' and pair in Data[subsType] and new_data[0] - Data[subsType][pair][0] > 1000: print(
-        'ERROR')
+    processed_data = processData(subsType, message['data'])
+    new_data = np.array(processed_data).flatten()
+
+    if subsType == 'kline_1s' and pair in Data[subsType] and new_data[0] - Data[subsType][pair][0] > 1000:
+        print('ERROR')
     Data[subsType][pair] = new_data
     if subsType == 'kline_1s':
         for type in SubTypes:
@@ -72,3 +75,4 @@ def message_handler(_, message):
 
 if __name__ == '__main__':
     binance_service.run(message_handler)
+    runServer()

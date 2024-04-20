@@ -1,5 +1,6 @@
 
 Stables = {'USDT', 'BNB', 'BTC', 'ETH'}
+file_path = 'datasets/data.h5'
 
 # tracking_pairs = {
 #     'BTC_USDT',

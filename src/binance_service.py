@@ -23,7 +23,7 @@ def realVolume(base, quote):
 
 tracking_pairs = [f'{symbol["baseAsset"]}{symbol["quoteAsset"]}' for symbol in exchange_info["symbols"]
                   if symbol["quoteAsset"] in Stables and symbol["status"] == "TRADING" and symbol[
-                      "isSpotTradingAllowed"] and realVolume(symbol["baseAsset"], symbol["quoteAsset"]) > 25000000]
+                      "isSpotTradingAllowed"] and realVolume(symbol["baseAsset"], symbol["quoteAsset"]) > 2500000]
 
 
 # tracking_pairs = tracking_pairs[:100]
@@ -39,3 +39,4 @@ def run(message_handler):
     for i in range(0, len(subscriptions), step):
         streams_client = SpotWebsocketStreamClient(on_message=message_handler, is_combined=True)
         streams_client.send_message_to_server(subscriptions[i:i + step])
+    print('binance started')
