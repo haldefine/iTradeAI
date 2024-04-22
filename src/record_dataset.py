@@ -7,18 +7,6 @@ import binance_service
 import config
 from web import runServer
 
-def addData(pair, data):
-    with h5py.File(config.file_path, 'a') as file:
-        if pair not in file:
-            pair_dataset = file.create_dataset(pair, shape=(0, data.shape[0]), maxshape=(None, data.shape[0]),
-                                               compression='gzip', compression_opts=9)
-        else:
-            pair_dataset = file[pair]
-
-        pair_dataset.resize((pair_dataset.shape[0] + 1, pair_dataset.shape[1]))
-
-        pair_dataset[-1] = data
-
 
 def showData(pair):
     with h5py.File('datasets/data.h5', 'r') as file:
@@ -48,12 +36,42 @@ def processData(subsType, data):
                                                                            data['asks']]
 
 
+def writeData():
+    with h5py.File(config.file_path, 'a') as file:
+        for pair in Data:
+
+            is_full = True
+            for type in SubTypes:
+                if type not in Data[pair]:
+                    is_full = False
+                    break
+            if not is_full:
+                continue
+
+            row_data = np.concatenate([Data[pair][type] for type in SubTypes])
+
+            if pair not in file:
+                pair_dataset = file.create_dataset(pair, shape=(0, row_data.shape[0]), maxshape=(None, row_data.shape[0]),
+                                                   compression='gzip', compression_opts=9)
+            else:
+                pair_dataset = file[pair]
+
+            pair_dataset.resize((pair_dataset.shape[0] + 1, pair_dataset.shape[1]))
+
+            pair_dataset[-1] = row_data
+
+
+
+
 SubTypes = ['kline_1s', 'ticker', 'avgPrice', 'depth20']
-Data = {'kline_1s': {}, 'ticker': {}, 'avgPrice': {}, 'depth20': {}}
+Data = {}
+LastTimestampWritten = 0
 
 
 def message_handler(_, message):
     global Data
+    global LastTimestampWritten
+
     message = json.loads(message)
     if 'stream' not in message:
         print(message)
@@ -63,14 +81,14 @@ def message_handler(_, message):
     processed_data = processData(subsType, message['data'])
     new_data = np.array(processed_data).flatten()
 
-    if subsType == 'kline_1s' and pair in Data[subsType] and new_data[0] - Data[subsType][pair][0] > 1000:
-        print('ERROR')
-    Data[subsType][pair] = new_data
     if subsType == 'kline_1s':
-        for type in SubTypes:
-            if pair not in Data[type]:
-                return
-        addData(pair, np.concatenate([Data[type][pair] for type in SubTypes]))
+        if new_data[0] > LastTimestampWritten:
+            LastTimestampWritten = new_data[0]
+            writeData()
+
+    if pair not in Data:
+        Data[pair] = {}
+    Data[pair][subsType] = new_data
 
 
 if __name__ == '__main__':
