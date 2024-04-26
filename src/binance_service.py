@@ -28,8 +28,6 @@ tracking_pairs = [f'{symbol["baseAsset"]}{symbol["quoteAsset"]}' for symbol in e
 
 # tracking_pairs = tracking_pairs[:100]
 
-def log(msg1, msg2):
-    print(msg1, msg2)
 
 def run(message_handler):
     print('start', len(tracking_pairs))
@@ -40,6 +38,6 @@ def run(message_handler):
 
     step = 150
     for i in range(0, len(subscriptions), step):
-        streams_client = SpotWebsocketStreamClient(on_close=log, on_error=log, on_message=message_handler, is_combined=True)
+        streams_client = SpotWebsocketStreamClient(on_close=print, on_error=print, on_message=message_handler, is_combined=True)
         streams_client.send_message_to_server(subscriptions[i:i + step])
     print('binance started')

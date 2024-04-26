@@ -7,8 +7,8 @@ COPY requirements.txt .
 
 RUN pip install -r requirements.txt
 
-COPY src/ .
+COPY src/ src/
 
 EXPOSE 8000
 
-CMD ["python", "./record_dataset.py"]
+CMD ["python", "src/record_dataset.py"]
