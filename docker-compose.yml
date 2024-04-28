@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   record_data:
-    image: haldefine/itraderai:latest
+    image: haldefine/itraderai
     build: .
     ports:
       - "8000:8000"
