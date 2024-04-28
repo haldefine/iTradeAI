@@ -8,3 +8,4 @@ services:
       - "8000:8000"
     volumes:
       - ./datasets:/app/datasets
+    stop_grace_period: 5m
