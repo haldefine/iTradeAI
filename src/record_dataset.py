@@ -1,5 +1,6 @@
 import json
-import time
+import signal
+import sys
 
 import h5py
 import numpy as np
@@ -11,25 +12,22 @@ from web import runServer
 
 def showData(pair):
     with h5py.File('datasets/data.h5', 'r') as file:
-        if pair in file:
-            pair_dataset = file[pair]
-
-            print(pair_dataset[-1])
-        else:
-            print(f"No data for pair {pair}")
+        pair_dataset = file['btcusdt']
+        print(len(pair_dataset))
+        print([data[0] for data in pair_dataset])
 
 
 def processData(subsType, data):
     if subsType == 'kline_1s':
-        return [int(data['k']['T']), float(data['k']['o']), float(data['k']['h']), float(data['k']['l']),
+        return [float(data['k']['T']), float(data['k']['o']), float(data['k']['h']), float(data['k']['l']),
                 float(data['k']['c']),
                 float(data['k']['v']), float(data['k']['q']), float(data['k']['V']), float(data['k']['Q']),
-                int(data['k']['n'])]
+                float(data['k']['n'])]
     elif subsType == 'ticker':
         return [float(data['P']), float(data['p']), float(data['w']), float(data['x']), float(data['c']),
                 float(data['Q']), float(data['b']), float(data['B']), float(data['a']), float(data['A']),
                 float(data['o']), float(data['h']), float(data['l']), float(data['v']), float(data['q']),
-                int(data['n'])]
+                float(data['n'])]
     elif subsType == 'avgPrice':
         return [float(data['w'])]
     elif subsType == 'depth20':
@@ -52,16 +50,16 @@ def writeData():
             row_data = np.concatenate([Data[pair][type] for type in SubTypes])
 
             if pair not in file:
-                pair_dataset = file.create_dataset(pair, shape=(0, row_data.shape[0]), maxshape=(None, row_data.shape[0]),
-                                                   compression='gzip', compression_opts=9)
+                pair_dataset = file.create_dataset(pair, shape=(0, row_data.shape[0]),
+                                                   dtype=np.float64,
+                                                   maxshape=(None, row_data.shape[0]),
+                                                   # compression='gzip', compression_opts=9
+                                                   )
             else:
                 pair_dataset = file[pair]
 
             pair_dataset.resize((pair_dataset.shape[0] + 1, pair_dataset.shape[1]))
-
             pair_dataset[-1] = row_data
-
-
 
 
 SubTypes = ['kline_1s', 'ticker', 'avgPrice', 'depth20']
@@ -93,5 +91,14 @@ def message_handler(_, message):
 
 
 if __name__ == '__main__':
-    binance_service.run(message_handler)
+    # showData('btcusdt')
+    connections = binance_service.run(message_handler)
+    def signal_handler(signal, frame):
+        for connection in connections:
+            connection.stop()
+        print('graceful stop')
+        sys.exit(0)
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
     runServer()
+

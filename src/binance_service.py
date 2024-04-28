@@ -1,3 +1,5 @@
+import time
+
 from config import Stables
 from binance.websocket.spot.websocket_stream import SpotWebsocketStreamClient
 from binance.spot import Spot
@@ -30,6 +32,7 @@ tracking_pairs = [f'{symbol["baseAsset"]}{symbol["quoteAsset"]}' for symbol in e
 
 
 def run(message_handler):
+    clients = []
     print('start', len(tracking_pairs))
     subscriptions = []
     for subsType in ['@kline_1s', '@ticker', '@avgPrice', '@depth20@1000ms']:
@@ -37,7 +40,13 @@ def run(message_handler):
             subscriptions.append(f'{pair.replace("_", "").lower()}{subsType}')
 
     step = 150
+    streams_client = SpotWebsocketStreamClient(on_close=print, on_error=print, on_message=message_handler,
+                                               is_combined=True)
     for i in range(0, len(subscriptions), step):
-        streams_client = SpotWebsocketStreamClient(on_close=print, on_error=print, on_message=message_handler, is_combined=True)
         streams_client.send_message_to_server(subscriptions[i:i + step])
+        time.sleep(1)
+    clients.append(streams_client)
+
     print('binance started')
+    return clients
+
