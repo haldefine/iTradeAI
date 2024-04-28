@@ -53,7 +53,7 @@ def writeData():
                 pair_dataset = file.create_dataset(pair, shape=(0, row_data.shape[0]),
                                                    dtype=np.float64,
                                                    maxshape=(None, row_data.shape[0]),
-                                                   # compression='gzip', compression_opts=9
+                                                   compression='gzip', compression_opts=9
                                                    )
             else:
                 pair_dataset = file[pair]
