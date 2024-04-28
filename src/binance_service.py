@@ -31,6 +31,8 @@ tracking_pairs = [f'{symbol["baseAsset"]}{symbol["quoteAsset"]}' for symbol in e
 # tracking_pairs = tracking_pairs[:100]
 
 
+
+
 def run(message_handler):
     clients = []
     print('start', len(tracking_pairs))
